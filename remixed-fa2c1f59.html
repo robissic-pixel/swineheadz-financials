@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE SWINEHEADZ FINANCIALS // Daily Open</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #0a0c0f; --panel: #12151a; --panel-2: #171b21; --line: #23282f;
+    --text: #e6edf3; --muted: #7d8590; --muted-2: #545c66;
+    --green: #0ecb81; --red: #f6465d; --gold: #f0b90b; --blue: #4a9eff;
+    --mono: 'JetBrains Mono', monospace; --display: 'Space Grotesk', sans-serif;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ background: var(--bg); color: var(--text); font-family: var(--mono); line-height:1.5; -webkit-font-smoothing: antialiased; }
+  body::before{
+    content:""; position:fixed; inset:0;
+    background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 28px 28px; pointer-events:none; z-index:0;
+  }
+  .wrap{ position:relative; z-index:1; max-width:980px; margin:0 auto; padding:0 0 60px; }
+
+  .ticker{ background:#000; border-bottom:1px solid var(--line); overflow:hidden; white-space:nowrap; padding:9px 0; font-size:12.5px; letter-spacing:0.02em; }
+  .ticker-track{ display:inline-block; animation: scroll 22s linear infinite; }
+  .ticker span{ margin:0 28px; color: var(--muted); }
+  .ticker b{ color: var(--text); font-weight:600; }
+  .up{ color: var(--green); } .down{ color: var(--red); }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+
+  .masthead{ padding:36px 24px 24px; border-bottom:1px solid var(--line); }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-size:11px; color: var(--gold); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:14px; font-weight:600; }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--green); box-shadow:0 0 8px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  h1{ font-family: var(--display); font-size:40px; font-weight:700; margin:0 0 6px; letter-spacing:-0.01em; }
+  .sub{ color: var(--muted); font-size:13px; }
+
+  .seclabel{ display:flex; align-items:baseline; gap:10px; margin:44px 24px 16px; }
+  .seclabel .num{ font-family: var(--display); color: var(--muted-2); font-size:13px; font-weight:700; }
+  .seclabel h2{ font-family: var(--display); font-size:15px; text-transform:uppercase; letter-spacing:0.08em; margin:0; color: var(--text); }
+  .seclabel .rule{ flex:1; height:1px; background: var(--line); }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:0 24px; }
+  @media(max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+
+  .card{ background: var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .card-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+  .card-head .ticker-name{ font-family: var(--display); font-weight:700; font-size:16px; }
+  .card-head .price{ font-family: var(--display); font-weight:700; font-size:22px; text-align:right; }
+  .badge{ display:inline-block; font-size:10.5px; padding:3px 9px; border-radius:20px; letter-spacing:0.03em; font-weight:600; margin-top:6px; }
+  .badge.bull{ background: rgba(14,203,129,0.12); color: var(--green); border:1px solid rgba(14,203,129,0.3); }
+  .badge.watch{ background: rgba(240,185,11,0.12); color: var(--gold); border:1px solid rgba(240,185,11,0.3); }
+  .card p{ color:#b7c0cb; font-size:13px; margin:0 0 10px; }
+  .card p.plan{ color: var(--text); border-left:2px solid var(--gold); padding-left:10px; font-size:12.5px; }
+  .card p:last-child{ margin-bottom:0; }
+
+  .feed{ padding:0 24px; display:flex; flex-direction:column; gap:1px; background: var(--line); border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+  .feed-item{ background: var(--panel); padding:16px 18px; display:flex; gap:14px; }
+  .tag{ flex-shrink:0; font-family: var(--display); font-size:10px; font-weight:700; letter-spacing:0.06em; padding:4px 8px; border-radius:5px; height:fit-content; text-transform:uppercase; }
+  .tag.jobs{ background: rgba(74,158,255,0.14); color: var(--blue); }
+  .tag.fomc{ background: rgba(240,185,11,0.14); color: var(--gold); }
+  .tag.earn{ background: rgba(246,70,93,0.14); color: var(--red); }
+  .tag.other{ background: rgba(125,133,144,0.14); color: var(--muted); }
+  .feed-item h3{ font-family: var(--display); font-size:14px; margin:0 0 5px; }
+  .feed-item p{ margin:0; font-size:12.5px; color: var(--muted); line-height:1.55; }
+
+  .watch-card{ margin:0 24px; background: var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; }
+  .watch-top{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .watch-top .name{ display:flex; align-items:center; gap:10px; }
+  .watch-top .name .sym{ font-family: var(--display); font-weight:700; font-size:20px; }
+  .trophy{ font-size:13px; color: var(--gold); }
+  .stat-row{ display:flex; gap:22px; margin-bottom:20px; flex-wrap:wrap; }
+  .stat .label{ font-size:10.5px; color: var(--muted-2); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
+  .stat .value{ font-family: var(--display); font-weight:700; font-size:16px; }
+
+  .heatmap-wrap{ margin:22px 0 16px; }
+  .heatmap-labels{ display:flex; justify-content:space-between; font-size:10.5px; color: var(--muted-2); margin-bottom:6px; font-weight:600; }
+  .heatmap{
+    position:relative; height:46px; border-radius:8px; border:1px solid var(--line);
+    background: linear-gradient(90deg, #f6465d 0%, #f6465d 14%, #d9524f 22%, #8a6a3a 32%, #12151a 42%, #12151a 58%, #3a7a52 68%, #0ecb81 78%, #0ecb81 100%);
+  }
+  .marker{ position:absolute; top:-6px; bottom:-6px; width:2px; background: var(--text); }
+  .marker .mlabel{ position:absolute; top:-22px; left:50%; transform:translateX(-50%); font-size:9.5px; color: var(--muted); white-space:nowrap; font-weight:600; }
+  .marker.now{ background:#fff; box-shadow:0 0 10px #fff; }
+  .marker.now .mlabel{ color:#fff; top:50px; }
+  .now-dot{ position:absolute; top:50%; width:12px; height:12px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 12px #fff, 0 0 0 3px rgba(255,255,255,0.15); }
+
+  .plan-box{ background: var(--panel-2); border-left:3px solid var(--gold); border-radius:6px; padding:14px 16px; font-size:12.5px; color:#cfd6de; margin-top:18px; }
+  .plan-box b{ color: var(--gold); }
+  .eth-card{ margin-top:14px; }
+
+  .guardrails{ padding:0 24px; display:flex; flex-direction:column; gap:10px; }
+  .grd{ display:flex; gap:14px; align-items:flex-start; background: var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; cursor:pointer; transition: border-color .15s; }
+  .grd:hover{ border-color: var(--gold); }
+  .grd input{ margin-top:3px; accent-color: var(--gold); width:15px; height:15px; flex-shrink:0; }
+  .grd .gtitle{ font-family: var(--display); font-size:13px; font-weight:700; margin-bottom:3px; }
+  .grd p{ margin:0; font-size:12px; color: var(--muted); line-height:1.5; }
+  .grd.checked{ opacity:0.5; }
+  .grd.checked .gtitle{ text-decoration: line-through; }
+
+  .signoff{ margin:44px 24px 0; padding-top:22px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .signoff .brand{ font-family: var(--display); font-weight:700; letter-spacing:0.04em; color: var(--muted); font-size:12px; }
+  .signoff .stamp{ font-size:11px; color: var(--muted-2); }
+
+  /* empty state */
+  .empty{ margin:0 24px; padding:30px; text-align:center; color: var(--muted); border:1px dashed var(--line); border-radius:10px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ============================================================
+   ✏️  EDIT EVERYTHING BELOW THIS LINE — nothing else needs to change.
+   Fill this in each day before sharing the file. Leave a field
+   blank / empty array and that section just won't render.
+   ============================================================ */
+const DATA = {
+  date: "Monday, July 6, 2026 · 6:00 AM CST",
+  headline: "THE SWINEHEADZ FINANCIALS",
+  subhead: "Morning Coffee // Monday Weekly Open — full macro layout before a single trade gets placed.",
+
+  ticker: [
+    { sym: "SPX", price: "7,495", change: "+0.16%", dir: "up" },
+    { sym: "DXY", price: "101.04", change: "→ steady", dir: "flat" },
+    { sym: "BTC", price: "$62,827", change: "-0.05%", dir: "down" },
+    { sym: "ETH", price: "$1,763", change: "-0.13%", dir: "down" }
+  ],
+
+  macro: [
+    {
+      symbol: "$SPX", price: "7,495", badge: "Cautious Bullish", badgeClass: "bull",
+      lines: [
+        "Creeping higher on the open after a holiday-shortened +1.8% week. Dow hit a record 52,900; Nasdaq lagged on chip pressure.",
+        "Prediction markets: 62–70% probability of a green open. Rotation out of semis into defensives/industrials — not capitulation."
+      ],
+      plan: ""
+    },
+    {
+      symbol: "$DXY", price: "101.04", badge: "Near 2-Wk Low", badgeClass: "watch",
+      lines: [
+        "Pulling back from last week's 101.39 peak as rate-hike bets get pared after the soft June jobs print."
+      ],
+      plan: "Consolidating + drifting lower = building tailwind for risk assets. A confirmed break below <b style='color:var(--gold)'>100.75</b> this week is the macro green light."
+    }
+  ],
+
+  feed: [
+    { tag: "jobs", tagLabel: "Jobs", title: "The Jobs Print That Changed Everything",
+      body: "June NFP: 57,000 vs. 117,000 expected. May revised down 43,000. Unemployment dipped to 4.2% only because participation fell to its lowest since March 2021. Fed futures now pricing cuts as base case — the most BTC-bullish macro development in weeks." },
+    { tag: "fomc", tagLabel: "FOMC", title: "FOMC Minutes Drop Wednesday — The Warsh Decoder Ring",
+      body: "Minutes from new Chair Kevin Warsh's first meeting (Jun 16–17) release Wednesday. Futures imply 1.5 hikes over 12mo — that math shifts fast if the tone reads dovish. No oversized positions into the 2pm release." },
+    { tag: "earn", tagLabel: "Earnings", title: "AI Earnings Season: The Week That Prices the Trade",
+      body: "The most critical Q2 stretch of the cycle kicks off. Semis have shed heavy value on AI-fatigue fears over two weeks — this week's early movers either confirm the rotation or trigger a violent reversal squeeze. Watch sector RSI for early tells." }
+  ],
+
+  btc: {
+    price: "$62,827",
+    badge: "Accumulation Watch",
+    trend: "Range-Bound / Coiling",
+    rsi: "~41–44 (Neutral)",
+    heatmapLeftLabel: "$60,980 · S3",
+    heatmapRightLabel: "$66,469 · R2",
+    markers: [
+      { pos: 18, label: "S2 62,202" },
+      { pos: 26, label: "S1 63,114" },
+      { pos: 32, label: "Dense Longs" },
+      { pos: 72, label: "R1 65,248" }
+    ],
+    nowPos: 34,
+    nowLabel: "NOW 62,827",
+    plan: "First macro-friendly setup in weeks — soft jobs data deflating rate-hike odds + softening DXY. Patient sniper mode: watch for either (a) a predatory flush into the $61k–$62.2k pocket, or (b) a clean 4H close and hold above $63,500 with volume expansion as entry. No chasing through resistance."
+  },
+
+  eth: {
+    price: "$1,763",
+    badge: "Monitor Closely",
+    lines: ["Clawed back from the $1,640 floor — encouraging, but 4H RSI (~44–48) still pinned in neutral."],
+    plan: "Watch for a reclaim + clean 4H close above <b style='color:var(--gold)'>$1,800</b> — first real signal to re-enter active playbook. Until then: monitor only, size zero."
+  },
+
+  guardrails: [
+    { title: "DXY Drift Check", body: "Confirmed break below 100.75 and trending down? That's the macro green light. Rebounding toward 101.5+? Headwind still active — size new longs smaller." },
+    { title: "BTC Structure Check", body: "Holding above $62,200, or did we get the flush into $61k–$62k? Either way — zoom to the 5-min chart and wait for structural shift confirmation. No anticipation trades." },
+    { title: "Wednesday FOMC Minute Risk", body: "Keep position sizing at 60% of normal limits until after Wednesday 2pm EST. The minutes could reprice the entire September narrative in either direction." }
+  ],
+
+  signoffBrand: "THE SWINEHEADZ FINANCIALS",
+  signoffStamp: "Texas Monday · holiday's over, tape's wide open"
+};
+/* ============================================================
+   ⛔ STOP EDITING — rendering logic below.
+   ============================================================ */
+
+function esc(s){ return (s ?? "").toString(); }
+
+function renderTicker(items){
+  if(!items || !items.length) return "";
+  const row = items.map(t => {
+    const cls = t.dir === "up" ? "up" : t.dir === "down" ? "down" : "";
+    return `<span>${esc(t.sym)} <b>${esc(t.price)}</b> <span class="${cls}">${esc(t.change)}</span></span>`;
+  }).join("");
+  return `<div class="ticker"><div class="ticker-track">${row}${row}</div></div>`;
+}
+
+function renderMacro(items){
+  if(!items || !items.length) return `<div class="empty">No macro cards for today.</div>`;
+  const cards = items.map(m => `
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="ticker-name">${esc(m.symbol)}</div>
+          ${m.badge ? `<span class="badge ${esc(m.badgeClass||'watch')}">${esc(m.badge)}</span>` : ""}
+        </div>
+        <div class="price">${esc(m.price)}</div>
+      </div>
+      ${(m.lines||[]).map(l => `<p>${esc(l)}</p>`).join("")}
+      ${m.plan ? `<p class="plan">${m.plan}</p>` : ""}
+    </div>
+  `).join("");
+  return `<div class="grid2">${cards}</div>`;
+}
+
+function renderFeed(items){
+  if(!items || !items.length) return `<div class="empty">No headlines today.</div>`;
+  const rows = items.map(f => `
+    <div class="feed-item">
+      <span class="tag ${esc(f.tag||'other')}">${esc(f.tagLabel||f.tag||'')}</span>
+      <div><h3>${esc(f.title)}</h3><p>${esc(f.body)}</p></div>
+    </div>
+  `).join("");
+  return `<div class="feed">${rows}</div>`;
+}
+
+function renderHeatmap(btc){
+  const markers = (btc.markers||[]).map(m => `
+    <div class="marker" style="left:${m.pos}%;"><span class="mlabel">${esc(m.label)}</span></div>
+  `).join("");
+  const now = (btc.nowPos != null) ? `
+    <div class="marker now" style="left:${btc.nowPos}%;"><span class="mlabel">${esc(btc.nowLabel||'')}</span><div class="now-dot"></div></div>
+  ` : "";
+  return `
+    <div class="heatmap-wrap">
+      <div class="heatmap-labels"><span>${esc(btc.heatmapLeftLabel)}</span><span>Liquidation Heatmap</span><span>${esc(btc.heatmapRightLabel)}</span></div>
+      <div class="heatmap">${markers}${now}</div>
+    </div>
+  `;
+}
+
+function renderWatch(btc, eth){
+  if(!btc && !eth) return `<div class="empty">No watchlist entries today.</div>`;
+  let btcBlock = "";
+  if(btc){
+    btcBlock = `
+      <div class="watch-top">
+        <div class="name"><span class="trophy">🏆</span><span class="sym">$BTC</span>${btc.badge ? `<span class="badge watch">${esc(btc.badge)}</span>` : ""}</div>
+        <div class="price" style="font-family:var(--display);font-weight:700;font-size:20px;">${esc(btc.price)}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="label">Weekly Trend</div><div class="value">${esc(btc.trend)}</div></div>
+        <div class="stat"><div class="label">4H RSI</div><div class="value">${esc(btc.rsi)}</div></div>
+      </div>
+      ${renderHeatmap(btc)}
+      ${btc.plan ? `<div class="plan-box"><b>Game plan:</b> ${esc(btc.plan)}</div>` : ""}
+    `;
+  }
+  let ethBlock = "";
+  if(eth){
+    ethBlock = `
+      <div class="card eth-card">
+        <div class="card-head">
+          <div><div class="ticker-name">$ETH</div>${eth.badge ? `<span class="badge watch">${esc(eth.badge)}</span>` : ""}</div>
+          <div class="price">${esc(eth.price)}</div>
+        </div>
+        ${(eth.lines||[]).map(l => `<p>${esc(l)}</p>`).join("")}
+        ${eth.plan ? `<p class="plan">${eth.plan}</p>` : ""}
+      </div>
+    `;
+  }
+  return `<div class="watch-card">${btcBlock}${ethBlock}</div>`;
+}
+
+function renderGuardrails(items){
+  if(!items || !items.length) return "";
+  const rows = items.map((g,i) => `
+    <label class="grd">
+      <input type="checkbox" onchange="this.closest('.grd').classList.toggle('checked', this.checked)">
+      <div><div class="gtitle">${esc(g.title)}</div><p>${esc(g.body)}</p></div>
+    </label>
+  `).join("");
+  return `<div class="guardrails">${rows}</div>`;
+}
+
+function section(num, title, inner){
+  if(!inner) return "";
+  return `<div class="seclabel"><span class="num">${num}</span><h2>${esc(title)}</h2><span class="rule"></span></div>${inner}`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderTicker(DATA.ticker)}
+    <div class="masthead">
+      <div class="eyebrow"><span class="dot"></span> LIVE OPEN · ${esc(DATA.date)}</div>
+      <h1>${esc(DATA.headline)}</h1>
+      <div class="sub">${esc(DATA.subhead)}</div>
+      <div class="sub" id="live-status" style="margin-top:6px;font-size:11px;letter-spacing:0.03em;">○ connecting to live prices…</div>
+    </div>
+    ${section("01", "Macro Weather Report", renderMacro(DATA.macro))}
+    ${section("02", "High-Impact Feed", renderFeed(DATA.feed))}
+    ${section("03", "Active Playbook Watchlist", renderWatch(DATA.btc, DATA.eth))}
+    ${section("04", "Pre-Flight Guardrails", renderGuardrails(DATA.guardrails))}
+    <div class="signoff">
+      <span class="brand">${esc(DATA.signoffBrand)}</span>
+      <span class="stamp">${esc(DATA.signoffStamp)}</span>
+    </div>
+  `;
+}
+render();
+
+/* ============================================================
+   🔴 LIVE PRICES — pulls BTC/ETH from CoinGecko's free public API
+   (no key needed). Runs on load, then every 60s. SPX/DXY and all
+   written analysis stay manual (no free real-time API for those).
+   If the fetch fails (offline, blocked, etc.) it just leaves the
+   static numbers above in place.
+   ============================================================ */
+function fmtUsd(n){
+  return "$" + n.toLocaleString(undefined, { maximumFractionDigits: n < 10 ? 4 : 0 });
+}
+function fmtPct(n){
+  const s = n.toFixed(2) + "%";
+  return n > 0 ? "+" + s : s;
+}
+
+async function fetchLivePrices(){
+  try{
+    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
+    if(!res.ok) throw new Error("bad response");
+    const data = await res.json();
+
+    const btcPrice = data.bitcoin?.usd;
+    const btcChg = data.bitcoin?.usd_24h_change;
+    const ethPrice = data.ethereum?.usd;
+    const ethChg = data.ethereum?.usd_24h_change;
+    if(btcPrice == null || ethPrice == null) throw new Error("missing fields");
+
+    // update ticker entries
+    (DATA.ticker || []).forEach(t => {
+      if(t.sym === "BTC"){ t.price = fmtUsd(btcPrice); t.change = fmtPct(btcChg); t.dir = btcChg >= 0 ? "up" : "down"; }
+      if(t.sym === "ETH"){ t.price = fmtUsd(ethPrice); t.change = fmtPct(ethChg); t.dir = ethChg >= 0 ? "up" : "down"; }
+    });
+    // update watchlist cards
+    if(DATA.btc) DATA.btc.price = fmtUsd(btcPrice);
+    if(DATA.eth) DATA.eth.price = fmtUsd(ethPrice);
+
+    render();
+    markLiveStatus(true);
+  }catch(e){
+    markLiveStatus(false);
+  }
+}
+
+function markLiveStatus(ok){
+  const el = document.getElementById('live-status');
+  if(!el) return;
+  const now = new Date();
+  const stamp = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  el.textContent = ok
+    ? `● LIVE · BTC/ETH updated ${stamp}`
+    : `○ static prices — live fetch unavailable`;
+  el.style.color = ok ? "var(--green)" : "var(--muted-2)";
+}
+
+fetchLivePrices();
+setInterval(fetchLivePrices, 60000);
+</script>
+</body>
+</html>
