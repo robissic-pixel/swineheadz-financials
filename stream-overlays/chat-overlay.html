@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SwineHeadz Live Chat</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 520px; height: 850px; background: transparent; overflow: hidden;
+    font-family: "Helvetica Neue", Arial, sans-serif; }
+  #head {
+    padding: 10px 18px; font-size: 22px; font-weight: 800; letter-spacing: 3px;
+    color: #f1c40f; text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+  }
+  #chat {
+    height: 790px; overflow-y: hidden; padding: 6px 18px;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 10px;
+    mask-image: linear-gradient(to bottom, transparent 0, black 60px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 60px);
+  }
+  .msg {
+    font-size: 23px; line-height: 1.35; color: #fff;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9);
+    background: rgba(10, 12, 20, 0.45); border-radius: 12px; padding: 8px 12px;
+    animation: slidein 0.35s ease;
+    overflow-wrap: break-word;
+  }
+  @keyframes slidein {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .user { font-weight: 800; }
+  .badge { font-size: 18px; margin-right: 4px; }
+  .emote { height: 30px; vertical-align: -6px; }
+</style>
+</head>
+<body>
+<div id="head">🐷 LIVE CHAT</div>
+<div id="chat"></div>
+<script>
+  const CHATROOM_API = 'https://kick.com/api/v2/channels/123306961/messages';
+  const chat = document.getElementById('chat');
+  const seen = new Set();
+  const MAX = 14;
+
+  const BADGE_EMOJI = { broadcaster: '👑', moderator: '🛡️', vip: '⭐', subscriber: '💎', founder: '🏆' };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Kick emote tokens look like [emote:12345:KEKW]
+  function renderContent(content) {
+    const safe = escapeHtml(content);
+    return safe.replace(/\[emote:(\d+):([^\]]+)\]/g,
+      '<img class="emote" src="https://cdn.kick.com/emotes/$1/full" alt=":$2:" title=":$2:" ' +
+      'onerror="this.outerHTML=\':$2:\'"/>');
+  }
+
+  function badgesFor(sender) {
+    const badges = (((sender || {}).identity || {}).badges) || [];
+    return badges.map(b => BADGE_EMOJI[b.type] || '').join('');
+  }
+
+  function addMessage(m) {
+    if (!m || seen.has(m.id)) return;
+    seen.add(m.id);
+    const sender = m.sender || {};
+    const color = ((sender.identity || {}).color) || '#ffffff';
+    const name = sender.username || '???';
+    const el = document.createElement('div');
+    el.className = 'msg';
+    el.innerHTML =
+      '<span class="badge">' + badgesFor(sender) + '</span>' +
+      '<span class="user" style="color:' + escapeHtml(color) + '">' + escapeHtml(name) + '</span>' +
+      '<span style="color:#c9cede">: </span>' +
+      '<span>' + renderContent(m.content || '') + '</span>';
+    chat.appendChild(el);
+    while (chat.children.length > MAX) chat.removeChild(chat.firstChild);
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch(CHATROOM_API, {cache: 'no-store'});
+      const j = await r.json();
+      const msgs = ((j || {}).data || {}).messages || [];
+      // oldest-first so the newest message lands at the bottom
+      msgs.slice()
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .forEach(addMessage);
+    } catch (e) { /* offline or hiccup — keep showing what we have */ }
+  }
+  poll();
+  setInterval(poll, 5000);
+</script>
+</body>
+</html>

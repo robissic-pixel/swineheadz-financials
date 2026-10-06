@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SwineHeadz Alert Popup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 900px; height: 500px; background: transparent; overflow: hidden;
+    font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif; }
+  #stage { position: relative; width: 100%; height: 100%; }
+  .card {
+    position: absolute; left: 50px; right: 50px; top: 60px;
+    background: rgba(10, 12, 20, 0.92);
+    border: 4px solid #57F287; border-radius: 24px;
+    padding: 36px 44px; color: #fff;
+    opacity: 0; transform: translateY(40px) scale(0.92);
+    box-shadow: 0 0 60px rgba(87, 242, 135, 0.25);
+  }
+  .card.short { border-color: #ED4245; box-shadow: 0 0 60px rgba(237, 66, 69, 0.25); }
+  .card.show { animation: pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+  .card.hide { animation: fadeout 0.6s ease forwards; }
+  @keyframes pop {
+    0% { opacity: 0; transform: translateY(40px) scale(0.92); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes fadeout { to { opacity: 0; transform: translateY(-24px) scale(0.97); } }
+  .kicker { font-size: 26px; letter-spacing: 4px; color: #8b93a7; margin-bottom: 8px; }
+  .title { font-size: 54px; line-height: 1.1; margin-bottom: 20px; }
+  .rows { display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; align-items: baseline; gap: 14px; font-size: 30px; }
+  .row .k { width: 200px; color: #8b93a7; font-size: 24px; }
+  .row .v { color: #fff; }
+  .row .v.tp { color: #57F287; }
+  .row .v.sl { color: #ED4245; }
+  .foot { margin-top: 22px; font-size: 22px; color: #8b93a7; letter-spacing: 2px; }
+  .pulse { animation: pulse 1.6s ease-in-out infinite; display: inline-block; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+  const stage = document.getElementById('stage');
+  let lastId = null, hideTimer = null;
+
+  function ago(iso) {
+    if (!iso) return '';
+    const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 90) return 'just now';
+    const m = Math.round(s / 60);
+    return m + ' min ago';
+  }
+
+  function show(card) {
+    stage.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = 'card show' + (card.direction === 'short' ? ' short' : '');
+    el.innerHTML =
+      '<div class="kicker"><span class="pulse">🐷</span> SWINEHEADZ DESK ALERT</div>' +
+      '<div class="title">' + card.emoji + ' ' + escapeHtml(card.label) + '</div>' +
+      '<div class="rows">' +
+      '<div class="row"><span class="k">💰 Entry</span><span class="v">' + escapeHtml(card.entry) + '</span></div>' +
+      '<div class="row"><span class="k">🎯 Take profit</span><span class="v tp">' + escapeHtml(card.tp) + '</span></div>' +
+      '<div class="row"><span class="k">🛑 Stop loss</span><span class="v sl">' + escapeHtml(card.sl) + '</span></div>' +
+      '</div>' +
+      '<div class="foot">fired ' + ago(card.fired_at) + ' · not financial advice</div>';
+    stage.appendChild(el);
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { el.classList.remove('show'); el.classList.add('hide'); }, 15000);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('feed.json?_=' + Date.now(), {cache: 'no-store'});
+      const feed = await r.json();
+      const latest = feed.latest;
+      if (latest && latest.id !== lastId) {
+        lastId = latest.id;
+        show(latest);
+      }
+    } catch (e) { /* feed not ready yet */ }
+  }
+  poll();
+  setInterval(poll, 10000);
+</script>
+</body>
+</html>

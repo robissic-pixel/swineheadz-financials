@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SwineHeadz Ticker Tape</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 100px; background: transparent; overflow: hidden;
+    font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif; }
+  .tape {
+    position: absolute; top: 0; left: 0; height: 100px; line-height: 100px;
+    background: rgba(10, 12, 20, 0.88); border-top: 3px solid #f1c40f;
+    white-space: nowrap; display: inline-block; padding-left: 100%;
+    animation: scroll 40s linear infinite; font-size: 44px; color: #fff;
+  }
+  @keyframes scroll { to { transform: translateX(-100%); } }
+  .sep { color: #f1c40f; margin: 0 36px; }
+  .long { color: #57F287; } .short { color: #ED4245; }
+</style>
+</head>
+<body>
+<div class="tape" id="tape"><span style="color:#8b93a7">🐷 SWINEHEADZ DESK — loading…</span></div>
+<script>
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  async function poll() {
+    try {
+      const r = await fetch('feed.json?_=' + Date.now(), {cache: 'no-store'});
+      const feed = await r.json();
+      const items = [feed.latest].concat(feed.recent || []).filter(Boolean).slice(0, 8);
+      if (!items.length) return;
+      const html = items.map(c => {
+        const cls = c.direction === 'short' ? 'short' : 'long';
+        return '<span class="' + cls + '">' + c.emoji + ' ' + escapeHtml(c.label) +
+          ' @ ' + escapeHtml(c.entry) + ' → TP ' + escapeHtml(c.tp) + '</span>';
+      }).join('<span class="sep">◆</span>');
+      // duplicate for a seamless loop
+      document.getElementById('tape').innerHTML =
+        '🐷 SWINEHEADZ DESK <span class="sep">◆</span>' + html +
+        '<span class="sep">◆</span>' + html;
+    } catch (e) { /* feed not ready yet */ }
+  }
+  poll();
+  setInterval(poll, 30000);
+</script>
+</body>
+</html>

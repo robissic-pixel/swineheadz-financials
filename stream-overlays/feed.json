@@ -1,0 +1,113 @@
+{
+ "updated_at": "2026-10-06T13:31:18.061104+00:00",
+ "latest": {
+  "id": "2026-10-06T13:31:04.372160+00:00|spcx_15m_short",
+  "ticker": "SPCX",
+  "direction": "short",
+  "emoji": "\ud83d\udd34",
+  "label": "SPCX 15M BREAK",
+  "entry": "171.2",
+  "tp": "158.9 (+7.35%)",
+  "sl": "171.5",
+  "fired_at": "2026-10-06T13:31:04.372160+00:00",
+  "no_chase": false
+ },
+ "recent": [
+  {
+   "id": "2026-10-06T13:30:39.248496+00:00|cl_15m_long",
+   "ticker": "CL",
+   "direction": "long",
+   "emoji": "\ud83d\udfe2",
+   "label": "CL 15M BREAK",
+   "entry": "87.96",
+   "tp": "91.31 (+3.89%)",
+   "sl": "87.89",
+   "fired_at": "2026-10-06T13:30:39.248496+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T13:15:41.924764+00:00|spcx_15m_short",
+   "ticker": "SPCX",
+   "direction": "short",
+   "emoji": "\ud83d\udd34",
+   "label": "SPCX 15M BREAK",
+   "entry": "171.2",
+   "tp": "158.9 (+7.35%)",
+   "sl": "171.5",
+   "fired_at": "2026-10-06T13:15:41.924764+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T12:15:55.180101+00:00|spcx_15m_short",
+   "ticker": "SPCX",
+   "direction": "short",
+   "emoji": "\ud83d\udd34",
+   "label": "SPCX 15M BREAK",
+   "entry": "172.4",
+   "tp": "158.9 (+8.01%)",
+   "sl": "172.7",
+   "fired_at": "2026-10-06T12:15:55.180101+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T12:15:38.227075+00:00|fil_15m_short",
+   "ticker": "FIL",
+   "direction": "short",
+   "emoji": "\ud83d\udd34",
+   "label": "FIL 15M BREAK",
+   "entry": "1.169",
+   "tp": "1.044 (+10.85%)",
+   "sl": "1.171",
+   "fired_at": "2026-10-06T12:15:38.227075+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T11:45:23.188390+00:00|doge_rsi55",
+   "ticker": "DOGE",
+   "direction": "long",
+   "emoji": "\ud83d\udfe2",
+   "label": "DOGE RSI ABOVE",
+   "entry": "0.09569",
+   "tp": "\u2014",
+   "sl": "\u2014",
+   "fired_at": "2026-10-06T11:45:23.188390+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T10:45:22.784477+00:00|eth_rsi55",
+   "ticker": "ETH",
+   "direction": "long",
+   "emoji": "\ud83d\udfe2",
+   "label": "ETH RSI ABOVE",
+   "entry": "2,717",
+   "tp": "\u2014",
+   "sl": "\u2014",
+   "fired_at": "2026-10-06T10:45:22.784477+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T09:30:25.846019+00:00|sol_rsi45",
+   "ticker": "SOL",
+   "direction": "short",
+   "emoji": "\ud83d\udd34",
+   "label": "SOL RSI BELOW",
+   "entry": "119.1",
+   "tp": "\u2014",
+   "sl": "\u2014",
+   "fired_at": "2026-10-06T09:30:25.846019+00:00",
+   "no_chase": false
+  },
+  {
+   "id": "2026-10-06T08:15:27.546229+00:00|btc_rsi55",
+   "ticker": "BTC",
+   "direction": "long",
+   "emoji": "\ud83d\udfe2",
+   "label": "BTC RSI ABOVE",
+   "entry": "8.576e+04",
+   "tp": "\u2014",
+   "sl": "\u2014",
+   "fired_at": "2026-10-06T08:15:27.546229+00:00",
+   "no_chase": false
+  }
+ ]
+}
