@@ -301,7 +301,7 @@ function stepMarket(warm){
       return;
     }
     /* ── SIM PATH (equities / havens / commodities, and crypto fallback) ── */
-    a.src = (a.cls==='crypto') ? 'SIM · FALLBACK' : 'SIM';
+    a.src = (a.cls==='crypto') ? 'SIM · FALLBACK' : (a.av ? 'ALPHA VANTAGE' : 'SIM');
     const classF = a.cls==='crypto'||a.cls==='cryptoEq'?classShock.crypto : a.cls==='equities'||a.cls==='tech'?classShock.equities : a.cls==='haven'||a.cls==='def'?classShock.haven : classShock.commodities;
     const r = mkt*a.beta + classF*(a.cls==='haven'||a.cls==='def'?-0.7:1) + gauss()*a.vol;
     a.price=Math.max(a.price*(1+r), a.price*0.5);
@@ -608,6 +608,28 @@ setInterval(loop,1800);
    wired as a cross-check stream only; if it never delivers, it is marked GEO-BLOCKED / NO FLOW and Coinbase
    carries the crypto legs alone. If EVERYTHING is unreachable (offline, file:// sandbox), the sim engine
    keeps the desk running and cards show SIM · FALLBACK. Nothing here ever fabricates a "live" label. */
+/* ════════════════════════ ALPHA VANTAGE QUOTES (quotes.json) ════════════════════════
+   Swept server-side twice per market day (open + close, free-tier budget) by
+   fetch_quotes.py. Applying a quote re-anchors the leg to the real tape:
+   price, day open and previous close all come from the exchange print. */
+async function loadAVQuotes(){
+  try{
+    const r=await fetch('quotes.json',{cache:'no-store'}); if(!r.ok) return;
+    const j=await r.json(); const q=j.quotes||{}; let n=0;
+    for(const s in q){ const a=A[s]; if(!a) continue; const qq=q[s];
+      a.anchor=qq.price; a.price=qq.price;
+      if(qq.prevClose) a.dayOpen=qq.prevClose;
+      if(qq.open) a.open=qq.open;
+      a.av=true;
+      a.hist.push(qq.price); a.vols.push(a.baseVol); a.highs.push(qq.high||qq.price); a.lows.push(qq.low||qq.price);
+      if(a.hist.length>N){a.hist.shift();a.vols.shift();a.highs.shift();a.lows.shift();}
+      n++;
+    }
+    if(n){ pushFeed(`📡 <b class="text-white">ALPHA VANTAGE:</b> ${n} real quotes applied (trading day ${j.tradingDay||'—'}). Equity legs re-anchored to the real tape.`,'bull'); drawMain(); drawRatio(); drawCorr(); drawTable(); }
+  }catch(e){ /* quotes.json not present yet — anchored sim continues */ }
+}
+loadAVQuotes(); setInterval(loadAVQuotes, 600000);
+
 window.REALCVD={BTC:[],ETH:[],SOL:[]};
 const LIVE_SYMS=['BTC','ETH','SOL'];
 const FEED={}; LIVE_SYMS.forEach(s=>FEED[s]={cb:null,bn:null});
