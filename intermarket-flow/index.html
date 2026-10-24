@@ -253,12 +253,12 @@ const gauss=()=>(rnd()+rnd()+rnd()+rnd()-2)/1.4;
 const DEFS=[
  ['SPY','S&P 500 ETF',759.97,2,0.00045,1.00,'equities',4200],
  ['QQQ','Nasdaq-100 ETF',704.4,2,0.00062,1.25,'equities',3100],
- ['BTC','Bitcoin',97420,0,0.00115,1.45,'crypto',8900],
- ['ETH','Ethereum',3412.55,2,0.00145,1.75,'crypto',4200],
+ ['BTC','Bitcoin',80412,0,0.00115,1.45,'crypto',8900],
+ ['ETH','Ethereum',2335.15,2,0.00145,1.75,'crypto',4200],
  ['DXY','U.S. Dollar Index',103.85,2,0.00022,-0.55,'haven',2600],
  ['TNX','10-Yr Treasury Yield %',4.992,3,0.00085,-0.35,'haven',1800],
  ['WTI','Crude Oil WTI',103.27,2,0.00095,0.55,'commodities',1500],
- ['SOL','Solana',214.36,2,0.00170,1.95,'crypto',1600],
+ ['SOL','Solana',101.04,2,0.00170,1.95,'crypto',1600],
  ['MSTR','MicroStrategy',146.01,2,0.00160,2.10,'cryptoEq',640],
  ['COIN','Coinbase',164.45,2,0.00145,1.90,'cryptoEq',520],
  ['MARA','MARA Holdings',7.02,2,0.00180,2.20,'cryptoEq',180],
@@ -305,7 +305,7 @@ function stepMarket(warm){
     const classF = a.cls==='crypto'||a.cls==='cryptoEq'?classShock.crypto : a.cls==='equities'||a.cls==='tech'?classShock.equities : a.cls==='haven'||a.cls==='def'?classShock.haven : classShock.commodities;
     const r = mkt*a.beta + classF*(a.cls==='haven'||a.cls==='def'?-0.7:1) + gauss()*a.vol;
     a.price=Math.max(a.price*(1+r), a.price*0.5);
-    if(DAYCHG[a.sym]!==undefined){ a.price += (a.anchor-a.price)*0.06; a.price = clamp(a.price, a.anchor*0.985, a.anchor*1.015); } /* anchored leg: hug the real close */
+    if(DAYCHG[a.sym]!==undefined || a.cls==='crypto'){ a.price += (a.anchor-a.price)*0.06; a.price = clamp(a.price, a.anchor*0.985, a.anchor*1.015); } /* anchored leg: hug the real close (crypto: fallback anchor only — the live path above overrides when the feed is fresh) */
     const spread=Math.abs(r)*a.price*0.7+a.price*0.0004;
     a.highs.push(a.price+spread*rnd()); a.lows.push(a.price-spread*rnd());
     const vPulse=1+Math.abs(r)/Math.max(a.vol,0.0002)*0.35+gauss()*0.15;
