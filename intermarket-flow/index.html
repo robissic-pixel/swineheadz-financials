@@ -249,27 +249,30 @@ let seed=987654321; const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return see
 const gauss=()=>(rnd()+rnd()+rnd()+rnd()-2)/1.4;
 
 /* sym, name, start price, decimals, vol (per-tick σ), beta to market factor, class, base $ volume/hr */
+/* START PRICES for non-live legs = Fri 2026-10-23 regular-session closes (Finnhub, cross-checked 2026-10-24). BTC/ETH/SOL start values are placeholders — the live Coinbase engine overrides them on load. Re-anchor these after any long market move; true real-time equities need an Alpha Vantage key. */
 const DEFS=[
- ['SPY','S&P 500 ETF',642.30,2,0.00045,1.00,'equities',4200],
- ['QQQ','Nasdaq-100 ETF',568.15,2,0.00062,1.25,'equities',3100],
+ ['SPY','S&P 500 ETF',759.97,2,0.00045,1.00,'equities',4200],
+ ['QQQ','Nasdaq-100 ETF',704.4,2,0.00062,1.25,'equities',3100],
  ['BTC','Bitcoin',97420,0,0.00115,1.45,'crypto',8900],
  ['ETH','Ethereum',3412.55,2,0.00145,1.75,'crypto',4200],
- ['DXY','U.S. Dollar Index',106.42,2,0.00022,-0.55,'haven',2600],
- ['TNX','10-Yr Treasury Yield %',4.412,3,0.00085,-0.35,'haven',1800],
- ['WTI','Crude Oil WTI',71.84,2,0.00095,0.55,'commodities',1500],
+ ['DXY','U.S. Dollar Index',103.85,2,0.00022,-0.55,'haven',2600],
+ ['TNX','10-Yr Treasury Yield %',4.992,3,0.00085,-0.35,'haven',1800],
+ ['WTI','Crude Oil WTI',103.27,2,0.00095,0.55,'commodities',1500],
  ['SOL','Solana',214.36,2,0.00170,1.95,'crypto',1600],
- ['MSTR','MicroStrategy',388.40,2,0.00160,2.10,'cryptoEq',640],
- ['COIN','Coinbase',264.18,2,0.00145,1.90,'cryptoEq',520],
- ['MARA','MARA Holdings',19.84,2,0.00180,2.20,'cryptoEq',180],
- ['NVDA','NVIDIA',138.92,2,0.00125,1.60,'tech',2900],
- ['TSLA','Tesla',342.60,2,0.00150,1.55,'tech',2100],
- ['AAPL','Apple',232.44,2,0.00070,0.95,'tech',2400],
- ['GLD','Gold ETF',248.16,2,0.00050,-0.30,'def',980],
- ['UUP','Dollar Bullish ETF',28.94,2,0.00024,-0.55,'def',210],
- ['XLP','Consumer Staples ETF',77.62,2,0.00032,0.25,'def',340],
+ ['MSTR','MicroStrategy',146.01,2,0.00160,2.10,'cryptoEq',640],
+ ['COIN','Coinbase',164.45,2,0.00145,1.90,'cryptoEq',520],
+ ['MARA','MARA Holdings',7.02,2,0.00180,2.20,'cryptoEq',180],
+ ['NVDA','NVIDIA',210.96,2,0.00125,1.60,'tech',2900],
+ ['TSLA','Tesla',372.22,2,0.00150,1.55,'tech',2100],
+ ['AAPL','Apple',347.73,2,0.00070,0.95,'tech',2400],
+ ['GLD','Gold ETF',366.61,2,0.00050,-0.30,'def',980],
+ ['UUP','Dollar Bullish ETF',28.96,2,0.00024,-0.55,'def',210],
+ ['XLP','Consumer Staples ETF',88.26,2,0.00032,0.25,'def',340],
 ];
 const A={}; // live asset state
-DEFS.forEach(([s,n,p,d,v,b,c,vol])=>{A[s]={sym:s,name:n,price:p,open:p,dayOpen:p*(1-(rnd()*0.02-0.008)),dec:d,vol:v,beta:b,cls:c,baseVol:vol,hist:[],vols:[],highs:[],lows:[],sessionVol:vol*(0.7+rnd()*0.5)}});
+DEFS.forEach(([s,n,p,d,v,b,c,vol])=>{A[s]={sym:s,name:n,price:p,anchor:p,open:p,dayOpen:p*(1-(rnd()*0.02-0.008)),dec:d,vol:v,beta:b,cls:c,baseVol:vol,hist:[],vols:[],highs:[],lows:[],sessionVol:vol*(0.7+rnd()*0.5)}});
+/* Real Fri 2026-10-23 day moves (%) for the anchored (non-live) legs — keeps 24h change honest vs the tape. */
+const DAYCHG={SPY:-0.52,QQQ:-0.01,DXY:0.30,TNX:0.82,WTI:3.80,NVDA:-0.59,TSLA:-0.63,AAPL:-0.14,MSTR:0.14,COIN:-2.74,MARA:-3.17,GLD:-0.65,UUP:0.21,XLP:-1.92};
 const BENCH=['SPY','QQQ','BTC','ETH','DXY','TNX','WTI'];
 const MAIN_ASSETS=['BTC','ETH','SPY','QQQ','DXY','WTI'];
 const COLORS={BTC:'#f59e0b',ETH:'#818cf8',SPY:'#10b981',QQQ:'#06b6d4',DXY:'#e2e8f0',TNX:'#a78bfa',WTI:'#fb7185',SOL:'#34d399',MSTR:'#f59e0b',COIN:'#60a5fa',MARA:'#f472b6',NVDA:'#84cc16',TSLA:'#ef4444',AAPL:'#cbd5e1',GLD:'#facc15',UUP:'#94a3b8',XLP:'#2dd4bf'};
@@ -302,6 +305,7 @@ function stepMarket(warm){
     const classF = a.cls==='crypto'||a.cls==='cryptoEq'?classShock.crypto : a.cls==='equities'||a.cls==='tech'?classShock.equities : a.cls==='haven'||a.cls==='def'?classShock.haven : classShock.commodities;
     const r = mkt*a.beta + classF*(a.cls==='haven'||a.cls==='def'?-0.7:1) + gauss()*a.vol;
     a.price=Math.max(a.price*(1+r), a.price*0.5);
+    if(DAYCHG[a.sym]!==undefined){ a.price += (a.anchor-a.price)*0.06; a.price = clamp(a.price, a.anchor*0.985, a.anchor*1.015); } /* anchored leg: hug the real close */
     const spread=Math.abs(r)*a.price*0.7+a.price*0.0004;
     a.highs.push(a.price+spread*rnd()); a.lows.push(a.price-spread*rnd());
     const vPulse=1+Math.abs(r)/Math.max(a.vol,0.0002)*0.35+gauss()*0.15;
@@ -314,7 +318,7 @@ function stepMarket(warm){
   tick++;
 }
 for(let i=0;i<N;i++) stepMarket(true);
-Object.values(A).forEach(a=>{a.open=a.hist[0]; a.dayOpen=a.hist[0]*(1-(rnd()*0.025-0.009))});
+Object.values(A).forEach(a=>{ if(DAYCHG[a.sym]!==undefined){ a.dayOpen=a.anchor/(1+DAYCHG[a.sym]/100); a.open=a.dayOpen; } else { a.open=a.hist[0]; a.dayOpen=a.hist[0]*(1-(rnd()*0.025-0.009)); } });
 
 /* ════════════════════════ QUANT PRIMITIVES ════════════════════════ */
 function mfi(a,period=14){
