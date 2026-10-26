@@ -220,7 +220,7 @@ if(window.tailwind){tailwind.config={theme:{extend:{colors:{ink:'#020617',panel:
         <p><b class="text-white">CVD:</b> Cumulative sum of signed volume — each bar adds volume when the pair closes up, subtracts when it closes down. Rising CVD under a flat ratio = quiet accumulation.</p>
         <p><b class="text-white">Correlation:</b> Pearson r on aligned per-tick returns across all 7 benchmarks, recomputed every tick. r &gt; 0.7 = moving as one trade · r &lt; −0.5 = genuine hedge / decoupling.</p>
         <p><b class="text-white">Regime engine:</b> Scores risk assets (SPY, QQQ, BTC, ETH) vs defensives (DXY, TNX, GLD-proxy flow) on 1H flow + MFI. Risk score ≥ +0.35 → RISK-ON · ≤ −0.35 with DXY/TNX bid → SAFE-HAVEN · extreme one-way score → FLIGHT TO CAPITAL / RISK-OFF CAPITULATION.</p>
-        <p><b class="text-white">Flow estimate:</b> Class flow $M/h = Σ (signed % move × dollar volume) per member asset — an impulse proxy, not exchange-reported flow. Use it for direction and ranking, not as audited flow data.</p>
+        <p><b class="text-white">Flow estimate:</b> Class flow $M/h = Σ (signed % move × volume weight) per member asset over the trailing 60 one-minute bars — live legs use real % moves with the volume weight scaled by that asset's real traded volume vs its own median minute. An impulse proxy, not exchange-reported flow. Use it for direction and ranking, not as audited flow data.</p>
       </div>
     </details>
   </section>
@@ -289,13 +289,35 @@ function stepMarket(warm){
     const lf = (!warm && typeof liveFeedFor==='function') ? liveFeedFor(a.sym) : null;
     if(lf){ /* ── LIVE PATH: real venue price drives this asset ── */
       a.price=lf.price; a.src=lf.venue;
-      a.highs.push(Math.max(lf.high||lf.price, prev, lf.price)); a.lows.push(Math.min(lf.low||lf.price, prev, lf.price));
-      const tickVol$ = Math.max(lf.volWindow||0, 0.02); /* $M traded since last tick */
-      a.vols.push(tickVol$*30); /* scale window to bar-equivalent for MFI/flow math */
-      a.hist.push(a.price);
+      const tickVol$ = Math.max(lf.volWindow||0, 0); /* real $M traded since last tick */
+      /* ── FLOW FIX (2026-10-26, "crypto always reads 0"): two defects stacked.
+         (1) WINDOW COLLAPSE — hist points are 1-minute bars (backfill seeds real 1m candles;
+         flow1h reads the trailing 60 points as 60 minutes), but the live path pushed one
+         point per engine tick (1.8s), collapsing the "1H" window to ~2 minutes of
+         micro-moves. Ticks now update the open minute bar in place; a new bar starts
+         only when the wall-clock minute rolls.
+         (2) WEIGHT SCALE — flow is an impulse proxy: every other leg's bar volume is the
+         desk weight (baseVol) × an activity pulse. Real crypto $M/min is ~1000× smaller
+         than those weights, so real vols summed to $0 next to them. Live bars now carry
+         baseVol × pulse, where pulse = the bar's REAL traded $M vs the asset's own median
+         minute from backfill (volRef) — real % moves, real relative volume, desk scale,
+         identical construction to the sim and AV paths (no scale jump on fallback). */
+      const nowMin = Math.floor(Date.now()/60000)*60000;
+      const li = a.hist.length-1;
+      a.barVol$ = (a.barVol$||0) + tickVol$;
+      const pulse = a.volRef ? clamp(a.barVol$/a.volRef, 0.25, 3) : 1;
+      if(li>=0 && a.barStart!==undefined && nowMin<=a.barStart){
+        a.hist[li]=a.price; a.vols[li]=a.baseVol*pulse;
+        a.highs[li]=Math.max(a.highs[li], lf.high||lf.price, a.price);
+        a.lows[li]=Math.min(a.lows[li], lf.low||lf.price, a.price);
+      } else {
+        a.hist.push(a.price); a.vols.push(a.baseVol);
+        a.highs.push(Math.max(lf.high||lf.price, prev, lf.price)); a.lows.push(Math.min(lf.low||lf.price, prev, lf.price));
+        a.barStart=nowMin; a.barVol$=tickVol$;
+        if(a.hist.length>N){a.hist.shift();a.vols.shift();a.highs.shift();a.lows.shift(); if(window.REALCVD&&REALCVD[a.sym]&&REALCVD[a.sym].length>N)REALCVD[a.sym].shift()}
+      }
       if(window.REALCVD && REALCVD[a.sym]) REALCVD[a.sym].push(lf.cumSigned||0);
       lf.volWindow=0;
-      if(a.hist.length>N){a.hist.shift();a.vols.shift();a.highs.shift();a.lows.shift(); if(window.REALCVD&&REALCVD[a.sym]&&REALCVD[a.sym].length>N)REALCVD[a.sym].shift()}
       a.sessionVol+= tickVol$;
       a.lastR=prev?(a.price-prev)/prev:0; a.prev=prev;
       return;
@@ -652,8 +674,12 @@ async function backfill(sym){
     const asc=rows.slice(0,300).reverse(); /* [ts, low, high, open, close, volume(base)] */
     const a=A[sym];
     a.hist=asc.map(c=>c[4]); a.highs=asc.map(c=>c[2]); a.lows=asc.map(c=>c[1]);
-    a.vols=asc.map(c=>Math.max(c[5]*c[4]/1e6,0.05)); /* $M per minute */
+    const rawVols=asc.map(c=>Math.max(c[5]*c[4]/1e6,0.05)); /* real $M per minute */
+    const medV=[...rawVols].sort((x,y)=>x-y)[Math.floor(rawVols.length/2)]||1;
+    a.volRef=medV; a.barVol$=rawVols[rawVols.length-1];
+    a.vols=rawVols.map(v=>a.baseVol*clamp(v/medV,0.25,3)); /* desk weight × real relative volume (flow-fix 2026-10-26) */
     while(a.hist.length>260){a.hist.shift();a.highs.shift();a.lows.shift();a.vols.shift()}
+    a.barStart=asc[asc.length-1][0]*1000; /* open minute of the last (partial) candle — live ticks bucket into it */
     a.price=a.hist[a.hist.length-1]; a.open=a.hist[0]; a.dayOpen=a.hist[0];
     a.sessionVol=a.vols.reduce((s,v)=>s+v,0);
     const slot=feedSlot('cb',sym); slot.price=a.price; slot.high=a.highs[a.highs.length-1]; slot.low=a.lows[a.lows.length-1]; slot.ts=Date.now(); slot.venue='COINBASE REST';
@@ -665,7 +691,11 @@ async function backfill(sym){
       if(!r.ok) throw new Error('HTTP '+r.status);
       const rows=await r.json(); const a=A[sym];
       a.hist=rows.map(c=>+c[4]); a.highs=rows.map(c=>+c[2]); a.lows=rows.map(c=>+c[3]);
-      a.vols=rows.map(c=>Math.max(+c[7]/1e6,0.05)); /* quote-asset volume → $M */
+      const rawVolsB=rows.map(c=>Math.max(+c[7]/1e6,0.05)); /* real quote-asset $M per minute */
+      const medVB=[...rawVolsB].sort((x,y)=>x-y)[Math.floor(rawVolsB.length/2)]||1;
+      a.volRef=medVB; a.barVol$=rawVolsB[rawVolsB.length-1];
+      a.vols=rawVolsB.map(v=>a.baseVol*clamp(v/medVB,0.25,3)); /* desk weight × real relative volume (flow-fix 2026-10-26) */
+      a.barStart=+rows[rows.length-1][0]; /* open time (ms) of the last (partial) kline */
       a.price=a.hist[a.hist.length-1]; a.open=a.hist[0]; a.dayOpen=a.hist[0]; a.sessionVol=a.vols.reduce((s,v)=>s+v,0);
       const slot=feedSlot('bn',sym); slot.price=a.price; slot.ts=Date.now();
       VENUE.bn.state='REST ONLY'; return true;
