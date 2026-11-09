@@ -257,7 +257,7 @@ const DEFS=[
  ['ETH','Ethereum',2335.15,2,0.00145,1.75,'crypto',4200],
  ['DXY','U.S. Dollar Index',103.85,2,0.00022,-0.55,'haven',2600],
  ['TNX','10-Yr Treasury Yield %',4.992,3,0.00085,-0.35,'haven',1800],
- ['WTI','Crude Oil WTI',103.27,2,0.00095,0.55,'commodities',1500],
+ ['WTI','Crude Oil WTI',87.43,2,0.00095,0.55,'commodities',1500],
  ['SOL','Solana',101.04,2,0.00170,1.95,'crypto',1600],
  ['MSTR','MicroStrategy',146.01,2,0.00160,2.10,'cryptoEq',640],
  ['COIN','Coinbase',164.45,2,0.00145,1.90,'cryptoEq',520],
@@ -272,7 +272,7 @@ const DEFS=[
 const A={}; // live asset state
 DEFS.forEach(([s,n,p,d,v,b,c,vol])=>{A[s]={sym:s,name:n,price:p,anchor:p,open:p,dayOpen:p*(1-(rnd()*0.02-0.008)),dec:d,vol:v,beta:b,cls:c,baseVol:vol,hist:[],vols:[],highs:[],lows:[],sessionVol:vol*(0.7+rnd()*0.5)}});
 /* Real Fri 2026-10-23 day moves (%) for the anchored (non-live) legs — keeps 24h change honest vs the tape. */
-const DAYCHG={SPY:-0.52,QQQ:-0.01,DXY:0.30,TNX:0.82,WTI:3.80,NVDA:-0.59,TSLA:-0.63,AAPL:-0.14,MSTR:0.14,COIN:-2.74,MARA:-3.17,GLD:-0.65,UUP:0.21,XLP:-1.92};
+const DAYCHG={SPY:-0.52,QQQ:-0.01,DXY:0.30,TNX:0.82,WTI:-3.74,NVDA:-0.59,TSLA:-0.63,AAPL:-0.14,MSTR:0.14,COIN:-2.74,MARA:-3.17,GLD:-0.65,UUP:0.21,XLP:-1.92};
 const BENCH=['SPY','QQQ','BTC','ETH','DXY','TNX','WTI'];
 const MAIN_ASSETS=['BTC','ETH','SPY','QQQ','DXY','WTI'];
 const COLORS={BTC:'#f59e0b',ETH:'#818cf8',SPY:'#10b981',QQQ:'#06b6d4',DXY:'#e2e8f0',TNX:'#a78bfa',WTI:'#fb7185',SOL:'#34d399',MSTR:'#f59e0b',COIN:'#60a5fa',MARA:'#f472b6',NVDA:'#84cc16',TSLA:'#ef4444',AAPL:'#cbd5e1',GLD:'#facc15',UUP:'#94a3b8',XLP:'#2dd4bf'};
